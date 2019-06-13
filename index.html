@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pi Note</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #222;
+      overflow: hidden;
+    }
+    canvas {
+      background-color: #fff;
+    }
+    #app-name {
+      position: absolute;
+      display: inline-block;
+      top: 0;
+      left: 0;
+      margin: 15px;
+      color: #444;
+      font-weight: bold;
+      z-index: 1;
+    }
+    #pinote-ui {
+      position: absolute;
+      display: inline-block;
+      top: 0;
+      right: 0;
+      z-index: 1;
+      margin-right: 15px;
+    }
+    #pinote-ui textarea {
+      width: 300px;
+      height: 300px;
+      font-size: 24px;
+      font-family: Verdana;
+      resize: none;
+    }
+    #show-hide-btn {
+      position: absolute;
+      width: 50px;
+      height: 30px;
+      left: -60px;
+      top: 10px;
+      border: 1px solid #ddd;
+      background-color: white;
+      /*box-shadow: 2px 2px 3px #ccc;*/
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="app-name">Pi Note</h1>
+  <div id="pinote-ui">
+    <div id="show-hide-btn"></div>
+    <div class="form-group">
+      <label for="color-input"></label>
+      <input id="color-input" class="form-control" type="color" value="#fbef09">
+    </div>
+    <div class="form-group">
+      <label id="width-label" for="width-input">Width: 300px</label>
+      <input id="width-input" class="form-control" type="range" min="200" max="400" value="300">
+    </div>
+    <div class="form-group">
+      <label id="height-label" for="height-input">Height: 300px</label>
+      <input id="height-input" class="form-control" type="range" min="200" max="400" value="300">
+    </div>
+    <div class="form-group">
+        <ul id="text-input-tabs" class="nav nav-tabs" role="tablist">
+          <li role="presentation" class="active"><a href="#a-text-tab" aria-controls="a-text-tab" role="tab" data-toggle="tab">Front side</a></li>
+          <li role="presentation"><a href="#b-text-tab" aria-controls="b-text-tab" role="tab" data-toggle="tab">Back side</a></li>
+        </ul>
+        <div class="tab-content">
+          <div role="tabpanel" class="tab-pane active" id="a-text-tab">
+            <textarea id="a-text-input" class="form-control"></textarea>
+          </div>
+          <div role="tabpanel" class="tab-pane" id="b-text-tab">
+            <textarea id="b-text-input" class="form-control"></textarea>
+          </div>
+        </div>
+    </div>
+    <button id="create-btn" type="button" class="btn btn-default">CREATE</button>
+    <button id="clear-btn" type="button" class="btn btn-default">CLEAR</button>
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+  <script src="./vendor/pixi/pixi.js"></script>
+  <script src="./dist/pinote.js"></script>
+  <script>
+    //var green;
+    //var red;
+    var renderer = PIXI.autoDetectRenderer();
+    renderer.view.style.position = "absolute";
+    renderer.backgroundColor = 0xffffff;
+    document.body.appendChild(renderer.view);
+
+    var stage = new PIXI.Container();
+    stage.interactive = true;
+
+    //var pinote = new PiNote(stage, 600, 450, 300, 300, "0xAAFF00");
+    var pinboard = new PinBoard(stage);
+    stage.addChild(pinboard.pinboard);
+
+    function update () {
+      pinboard.update();
+    }
+
+    function render () {
+      update();
+      renderer.render(stage);
+      requestAnimationFrame(render);
+    }
+
+    function resize () {
+      var w = window.innerWidth;
+      var h = window.innerHeight;
+
+      stage.hitArea = new PIXI.Rectangle(0, 0, w, h);
+
+      renderer.view.style.width = w + "px";
+      renderer.view.style.height = h + "px";
+
+      renderer.resize(w,h);
+    }
+
+    resize();
+    requestAnimationFrame(render);
+    window.onresize = function () {
+      resize();
+    };
+
+    $(document).ready(function() {
+      $('#create-btn').on('click', function () {
+        var color = $('#color-input').val();
+        var width = parseInt($('#width-input').val());
+        var height=  parseInt($('#height-input').val());
+        var textA = $('#a-text-input').val();
+        var textB = $('#b-text-input').val();
+
+        $('#a-text-input').val("");
+        $('#b-text-input').val("");
+
+        pinboard.add({
+          x: window.innerWidth/2,
+          y: window.innerHeight/2,
+          width: width,
+          height: height,
+          color: color,
+          textA: textA,
+          textB: textB
+        });
+      })
+
+      $('#clear-btn').on('click', function () {
+        pinboard.clear();
+      });
+
+      $('#text-input-tabs a').on('click', function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+      });
+
+      $('#width-input').on('input', function () {
+        $('#width-label').html("Width: "+$(this).val()+"px");
+      });
+      $('#height-input').on('input', function () {
+        $('#height-label').html("Height: "+$(this).val()+"px");
+      });
+      $('#width-input').on('change', function () {
+        var val = $(this).val();
+        $('#a-text-input').css('width', val+'px');
+        $('#b-text-input').css('width', val+'px');
+      });
+      $('#height-input').on('change', function () {
+        var val = $(this).val();
+        $('#a-text-input').css('height', val+'px');
+        $('#b-text-input').css('height', val+'px');
+      });
+
+      $('#show-hide-btn').on('click', function () {
+        $('#pinote-ui').toggleClass('out');
+        if($('#pinote-ui').hasClass('out')) {
+          var shift = -$('#pinote-ui').width();
+          $('#pinote-ui').animate({right: shift}, 300);
+        } else {
+          $('#pinote-ui').animate({right: 20}, 300);
+        }
+      })
+    });
+  </script>
+</body>
+</html>
