@@ -1,4 +1,4 @@
 ## Pi note sticky
 A sticky note paper simulation.
 
-[demo](https://myrepongithub.github.io/pi-note-sticky/)
+[demo](https://adevelopercase.github.io/pi-note-sticky/)
